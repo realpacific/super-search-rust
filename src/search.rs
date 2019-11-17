@@ -30,24 +30,20 @@ impl Search {
         }).to_string()
     }
 
-    pub fn initialize() -> Vec<Box<Self>> {
+    pub fn initialize() -> Vec<Self> {
         let mut searches = Vec::new();
-        searches.push(Box::new(
-            Search {
-                url: "https://www.youtube.com/results?search_query=".to_string(),
-                description: "Youtube".to_string(),
-                keyword: "yt".to_string(),
-            }));
-        searches.push(Box::new(Search {
-            url: "https://medium.com/search?q=".to_string(),
-            description: "Medium".to_string(),
-            keyword: "md".to_string(),
-        }));
-        searches.push(Box::new(Search {
-            url: "https://github.com/search?q=".to_string(),
-            description: "GitHub".to_string(),
-            keyword: "gh".to_string(),
-        }));
+        searches.push(Search::new("https://www.youtube.com/results?search_query=", "Youtube", "yt"));
+        searches.push(Search::new("https://medium.com/search?q=", "Medium", "md"));
+        searches.push(Search::new("https://stackoverflow.com/search?q=", "StackOverflow", "so"));
+        searches.push(Search::new("https://github.com/search?q=", "GitHub", "gh"));
         searches
+    }
+
+    pub fn new(url: &str, description: &str, keyword: &str) -> Search {
+        Search {
+            url: url.to_string(),
+            description: description.to_string(),
+            keyword: keyword.to_string(),
+        }
     }
 }

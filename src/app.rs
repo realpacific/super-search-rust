@@ -1,8 +1,8 @@
 use self::super::search::Search;
 
 pub fn run() {
-    let input = String::from("md");
-    let query = String::from("How to rust?");
+    let input = String::from("so");
+    let query = String::from("How to use option in rust");
     let mut searches = vec![];
     for item in Search::initialize() {
         searches.push(Search::from_json(String::from(item.to_json())));
