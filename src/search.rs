@@ -1,10 +1,9 @@
-use serde_json;
-use std::fmt::{Display, Formatter, Error};
-use serde_json::Value;
-use serde::{Deserialize, Serialize};
-use serde_json::Result as SerdeResult;
+use std::fmt::{Display, Error, Formatter};
 
-#[derive(Serialize, Deserialize)]
+use serde::{Deserialize, Serialize};
+use serde_json;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Search {
     pub url: String,
     pub description: String,
@@ -17,6 +16,7 @@ impl Display for Search {
     }
 }
 
+#[allow(dead_code)]
 impl Search {
     pub fn from_json(s: String) -> Self {
         return serde_json::from_str(s.as_str()).unwrap();
