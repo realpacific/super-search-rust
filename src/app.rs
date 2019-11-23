@@ -7,9 +7,20 @@ use super::persistence::SearchPersistence;
 use self::super::search::Search;
 use prettytable::{Table, Row, Cell};
 
+pub fn fetch_inputs() -> Vec<Search> {
+    if !SearchPersistence::is_already_exits() {
+        SearchPersistence::write(&Search::initialize());
+    }
+    return SearchPersistence::load();
+}
+
 pub fn run() {
-    let input = String::from("so");
-    let query = String::from("How to use option in rust");
+    let input = &String::from("so");
+    let query = &String::from("How to use option in rust");
+    search(input, query)
+}
+
+pub fn search(input: &String, query: &String) {
     if !SearchPersistence::is_already_exits() {
         SearchPersistence::write(&Search::initialize());
     }
