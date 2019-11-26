@@ -14,12 +14,6 @@ pub fn fetch_inputs() -> Vec<Search> {
     return SearchPersistence::load();
 }
 
-pub fn run() {
-    let input = &String::from("so");
-    let query = &String::from("How to use option in rust");
-    search(input, query)
-}
-
 pub fn search(input: &String, query: &String) {
     if !SearchPersistence::is_already_exits() {
         SearchPersistence::write(&Search::initialize());
