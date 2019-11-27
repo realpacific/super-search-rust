@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 
 use serde::{Deserialize, Serialize};
@@ -45,5 +46,13 @@ impl Search {
             description: description.to_string(),
             keyword: keyword.to_string(),
         }
+    }
+
+    pub fn convert_to_map(vector: &Vec<Self>) -> HashMap<&String, &String> {
+        let mut map = HashMap::new();
+        vector.iter().for_each(|x| {
+            map.insert(&x.keyword, &x.url);
+        });
+        return map;
     }
 }
