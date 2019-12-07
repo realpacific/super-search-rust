@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::BufReader;
 use std::path::Path;
 
@@ -12,6 +12,7 @@ pub trait Persistence<T> {
     fn write(t: &Vec<T>);
     fn load() -> Vec<T>;
     fn is_already_exits() -> bool;
+    fn update(t: Search) -> bool;
 }
 
 pub struct SearchPersistence;
@@ -30,5 +31,15 @@ impl Persistence<Search> for SearchPersistence {
 
     fn is_already_exits() -> bool {
         return Path::exists(Path::new(FILE_NAME));
+    }
+
+    fn update(t: Search) -> bool {
+        let contents = SearchPersistence::load();
+        let mut map = Search::map_keyword_to_self(&contents);
+        map.insert(&t.keyword, &t);
+        let file = OpenOptions::new().read(true).truncate(true).write(true).open(FILE_NAME);
+        let vec = map.values().collect::<Vec<_>>();
+        serde_json::to_writer(&file.unwrap(), &vec).unwrap();
+        return true;
     }
 }
