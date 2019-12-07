@@ -9,6 +9,8 @@ use clap::{App as Clap, Arg, ArgMatches, ErrorKind, SubCommand};
 use prettytable::{Cell, Row, Table};
 use webbrowser;
 
+use url::{ParseError as UrlError, Url};
+
 use crate::persistence::{Persistence, SearchPersistence};
 use crate::search::Search;
 
@@ -77,8 +79,6 @@ fn main() {
     // Invalid if there are no matches of args or sub-command or is empty
     let is_valid = (matches.as_ref().is_ok()) &&
         (!matches.as_ref().unwrap().args.is_empty() || !matches.as_ref().unwrap().subcommand.is_none());
-    println!("{:?}", matches);
-
     if is_valid {
         let matched_keyword = &matches.unwrap();
         match matched_keyword.subcommand() {
@@ -87,13 +87,21 @@ fn main() {
                 return;
             }
             ("add", Some(sub)) => {
-                let search = Search {
-                    keyword: sub.value_of("kw").unwrap().to_string(),
-                    url: sub.value_of("q").unwrap().to_string(),
-                    description: sub.values_of("d").unwrap().collect::<Vec<_>>().join(" "),
-                };
+                let url = sub.value_of("q").unwrap().trim();
+                if Url::parse(&url) == Err(UrlError::RelativeUrlWithoutBase) {
+                    println!("Invalid query url provided.");
+                    return;
+                }
+                let keyword = sub.value_of("kw").unwrap().trim();
+                if keyword.len() != 2 {
+                    println!("Keyword must be exactly of length 2. Provided keyword: {}", &keyword);
+                    return;
+                }
+                let description = sub.values_of("d").unwrap().collect::<Vec<_>>().join(" ");
+                let search = Search::new(url, description.as_str(), keyword);
+
                 if SearchPersistence::update(search) {
-                    println!("Added keyword");
+                    println!("Added keyword {}", keyword);
                 }
                 return;
             }
