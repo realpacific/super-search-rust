@@ -5,7 +5,7 @@ extern crate prettytable;
 #[macro_use]
 extern crate serde_json;
 
-use clap::{App as Clap, Arg, ArgMatches, SubCommand};
+use clap::{App as Clap, Arg, ArgMatches, ErrorKind, SubCommand};
 use prettytable::{Cell, Row, Table};
 use webbrowser;
 
@@ -24,6 +24,33 @@ fn main() {
             SubCommand::with_name("list")
                 .about("List all stored keywords.")
                 .alias("ls"),
+        )
+        .subcommand(
+            SubCommand::with_name("add")
+                .about("Add new query")
+                .alias("a")
+                .arg(
+                    Arg::with_name("kw")
+                        .short("k")
+                        .help("Keyword to be used when searching")
+                        .takes_value(true)
+                        .max_values(1)
+                        .required(true)
+                )
+                .arg(Arg::with_name("q")
+                    .short("q")
+                    .help("Query to be used for building links")
+                    .takes_value(true)
+                    .max_values(1)
+                    .required(true)
+                )
+                .arg(Arg::with_name("d")
+                    .short("d")
+                    .help("Describe what the query will do")
+                    .takes_value(true)
+                    .max_values(100)
+                    .required(true)
+                )
         );
     let searches = load_records_from_storage();
     for i in 0..searches.len() {
@@ -33,15 +60,41 @@ fn main() {
             .max_values(1000)
             .takes_value(true))
     }
+
     let matches = clap.get_matches_safe();
+
+    // Built-in commands like --help returns Error of kind `ErrorKind::HelpDisplayed` so handle this
+    match matches.as_ref() {
+        Ok(_) => {}
+        Err(error) => {
+            if error.kind == ErrorKind::VersionDisplayed || error.kind == ErrorKind::HelpDisplayed {
+                // message contains the information in case of --help & -V
+                println!("{}", error.message);
+                return;
+            }
+        }
+    }
     // Invalid if there are no matches of args or sub-command or is empty
-    let is_valid = matches.is_ok() &&
-        (!((&matches).as_ref().unwrap().args).is_empty() || !(&matches).as_ref().unwrap().subcommand.is_none());
+    let is_valid = (matches.as_ref().is_ok()) &&
+        (!matches.as_ref().unwrap().args.is_empty() || !matches.as_ref().unwrap().subcommand.is_none());
+    println!("{:?}", matches);
+
     if is_valid {
         let matched_keyword = &matches.unwrap();
         match matched_keyword.subcommand() {
             ("list", _) => {
                 display_table();
+                return;
+            }
+            ("add", Some(sub)) => {
+                let search = Search {
+                    keyword: sub.value_of("kw").unwrap().to_string(),
+                    url: sub.value_of("q").unwrap().to_string(),
+                    description: sub.values_of("d").unwrap().collect::<Vec<_>>().join(" "),
+                };
+                if SearchPersistence::update(search) {
+                    println!("Added keyword");
+                }
                 return;
             }
             _ => {}

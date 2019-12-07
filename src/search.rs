@@ -13,7 +13,7 @@ pub struct Search {
 
 impl Display for Search {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "Search(url:{}, keyword:{})", self.url, self.keyword)
+        write!(f, "Search(url:{}, keyword:{}, description: {})", self.url, self.keyword, self.description)
     }
 }
 
@@ -52,6 +52,14 @@ impl Search {
         let mut map = HashMap::new();
         vector.iter().for_each(|x| {
             map.insert(&x.keyword, &x.url);
+        });
+        return map;
+    }
+
+    pub fn map_keyword_to_self(vector: &Vec<Self>) -> HashMap<&String, &Search> {
+        let mut map: HashMap<&String, &Self> = HashMap::new();
+        vector.iter().for_each(|x| {
+            map.insert(&x.keyword, &x);
         });
         return map;
     }
