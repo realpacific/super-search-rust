@@ -17,6 +17,16 @@ impl Display for Search {
     }
 }
 
+impl PartialEq for Search {
+    fn eq(&self, other: &Self) -> bool {
+        return self.keyword == other.keyword;
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        return self.keyword != other.keyword;
+    }
+}
+
 #[allow(dead_code)]
 impl Search {
     pub fn from_json(s: String) -> Self {

@@ -11,7 +11,7 @@ use webbrowser;
 
 use url::{ParseError as UrlError, Url};
 
-use crate::persistence::{Persistence, SearchPersistence};
+use crate::persistence::{Persistence, SearchPersistence, PersistenceResult};
 use crate::search::Search;
 
 mod search;
@@ -53,8 +53,25 @@ fn main() {
                     .max_values(100)
                     .required(true)
                 )
+        )
+        .subcommand(
+            SubCommand::with_name("del")
+                .about("Delete Keyword")
+                .alias("del")
+                .arg(
+                    Arg::with_name("kw")
+                        .short("k")
+                        .help("Keyword to be deleted")
+                        .takes_value(true)
+                        .max_values(1)
+                        .required(true)
+                )
         );
+
     let searches = load_records_from_storage();
+    if searches.len() == 0 {
+        println!("Keywords are empty. Use `add` to start adding.");
+    }
     for i in 0..searches.len() {
         clap = clap.arg(Arg::with_name(&searches[i].keyword)
             .long(&searches[i].keyword)
@@ -89,7 +106,7 @@ fn main() {
             ("add", Some(sub)) => {
                 let url = sub.value_of("q").unwrap().trim();
                 if Url::parse(&url) == Err(UrlError::RelativeUrlWithoutBase) {
-                    println!("Invalid query url provided.");
+                    println!("Invalid query url {} provided.", &url);
                     return;
                 }
                 let keyword = sub.value_of("kw").unwrap().trim();
@@ -99,9 +116,21 @@ fn main() {
                 }
                 let description = sub.values_of("d").unwrap().collect::<Vec<_>>().join(" ");
                 let search = Search::new(url, description.as_str(), keyword);
-
-                if SearchPersistence::update(search) {
-                    println!("Added keyword {}", keyword);
+                let result = SearchPersistence::update(search);
+                if result == PersistenceResult::Updated {
+                    println!("Updated keyword {}.", keyword);
+                } else if result == PersistenceResult::Created {
+                    println!("Added new keyword {}.", keyword);
+                }
+                return;
+            }
+            ("del", Some(sub)) => {
+                let keyword = sub.value_of("kw").unwrap().trim().to_string();
+                let result = SearchPersistence::remove(keyword.clone());
+                if result == PersistenceResult::Deleted {
+                    println!("Deleted keyword {}.", keyword);
+                } else if result == PersistenceResult::Nothing {
+                    println!("No such keyword {} found.", keyword);
                 }
                 return;
             }
