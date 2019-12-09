@@ -9,7 +9,9 @@ use clap::{App as Clap, Arg, ArgMatches, ErrorKind, SubCommand};
 use prettytable::{Cell, Row, Table};
 use webbrowser;
 
-use crate::persistence::{Persistence, SearchPersistence};
+use url::{ParseError as UrlError, Url};
+
+use crate::persistence::{Persistence, SearchPersistence, PersistenceResult};
 use crate::search::Search;
 
 mod search;
@@ -51,8 +53,25 @@ fn main() {
                     .max_values(100)
                     .required(true)
                 )
+        )
+        .subcommand(
+            SubCommand::with_name("del")
+                .about("Delete Keyword")
+                .alias("del")
+                .arg(
+                    Arg::with_name("kw")
+                        .short("k")
+                        .help("Keyword to be deleted")
+                        .takes_value(true)
+                        .max_values(1)
+                        .required(true)
+                )
         );
+
     let searches = load_records_from_storage();
+    if searches.len() == 0 {
+        println!("Keywords are empty. Use `add` to start adding.");
+    }
     for i in 0..searches.len() {
         clap = clap.arg(Arg::with_name(&searches[i].keyword)
             .long(&searches[i].keyword)
@@ -77,8 +96,6 @@ fn main() {
     // Invalid if there are no matches of args or sub-command or is empty
     let is_valid = (matches.as_ref().is_ok()) &&
         (!matches.as_ref().unwrap().args.is_empty() || !matches.as_ref().unwrap().subcommand.is_none());
-    println!("{:?}", matches);
-
     if is_valid {
         let matched_keyword = &matches.unwrap();
         match matched_keyword.subcommand() {
@@ -87,13 +104,33 @@ fn main() {
                 return;
             }
             ("add", Some(sub)) => {
-                let search = Search {
-                    keyword: sub.value_of("kw").unwrap().to_string(),
-                    url: sub.value_of("q").unwrap().to_string(),
-                    description: sub.values_of("d").unwrap().collect::<Vec<_>>().join(" "),
-                };
-                if SearchPersistence::update(search) {
-                    println!("Added keyword");
+                let url = sub.value_of("q").unwrap().trim();
+                if Url::parse(&url) == Err(UrlError::RelativeUrlWithoutBase) {
+                    println!("Invalid query url {} provided.", &url);
+                    return;
+                }
+                let keyword = sub.value_of("kw").unwrap().trim();
+                if keyword.len() != 2 {
+                    println!("Keyword must be exactly of length 2. Provided keyword: {}", &keyword);
+                    return;
+                }
+                let description = sub.values_of("d").unwrap().collect::<Vec<_>>().join(" ");
+                let search = Search::new(url, description.as_str(), keyword);
+                let result = SearchPersistence::update(search);
+                if result == PersistenceResult::Updated {
+                    println!("Updated keyword {}.", keyword);
+                } else if result == PersistenceResult::Created {
+                    println!("Added new keyword {}.", keyword);
+                }
+                return;
+            }
+            ("del", Some(sub)) => {
+                let keyword = sub.value_of("kw").unwrap().trim().to_string();
+                let result = SearchPersistence::remove(keyword.clone());
+                if result == PersistenceResult::Deleted {
+                    println!("Deleted keyword {}.", keyword);
+                } else if result == PersistenceResult::Nothing {
+                    println!("No such keyword {} found.", keyword);
                 }
                 return;
             }

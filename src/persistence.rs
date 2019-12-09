@@ -9,18 +9,41 @@ use crate::search::Search;
 static FILE_NAME: &str = "data.json";
 
 pub trait Persistence<T> {
-    fn write(t: &Vec<T>);
+    fn write(t: &[T]) -> PersistenceResult;
     fn load() -> Vec<T>;
     fn is_already_exits() -> bool;
-    fn update(t: Search) -> bool;
+    fn update(t: Search) -> PersistenceResult;
+    fn remove(kw: String) -> PersistenceResult;
 }
 
 pub struct SearchPersistence;
 
+#[derive(PartialEq)]
+pub enum PersistenceResult {
+    Created,
+    Updated,
+    Deleted,
+    Loaded,
+    Error,
+    Nothing,
+}
+
 impl Persistence<Search> for SearchPersistence {
-    fn write(t: &Vec<Search>) {
-        let file = File::create(FILE_NAME);
-        serde_json::to_writer(&file.unwrap(), t).unwrap();
+    fn write(t: &[Search]) -> PersistenceResult {
+        let file = OpenOptions::new().create(true)
+            .read(true)
+            .write(true)
+            .truncate(true)
+            .open(FILE_NAME);
+        if file.is_err() {
+            return PersistenceResult::Error;
+        }
+        let result = serde_json::to_writer(&file.unwrap(), t);
+        if result.is_ok() {
+            result.unwrap();
+            return PersistenceResult::Created;
+        }
+        return PersistenceResult::Error;
     }
 
     fn load() -> Vec<Search> {
@@ -33,13 +56,26 @@ impl Persistence<Search> for SearchPersistence {
         return Path::exists(Path::new(FILE_NAME));
     }
 
-    fn update(t: Search) -> bool {
-        let contents = SearchPersistence::load();
-        let mut map = Search::map_keyword_to_self(&contents);
-        map.insert(&t.keyword, &t);
-        let file = OpenOptions::new().read(true).truncate(true).write(true).open(FILE_NAME);
-        let vec = map.values().collect::<Vec<_>>();
-        serde_json::to_writer(&file.unwrap(), &vec).unwrap();
-        return true;
+    fn update(t: Search) -> PersistenceResult {
+        let mut contents = SearchPersistence::load();
+        let original_size = contents.len();
+        contents.retain(|x| *x != t);
+        if contents.len() < original_size {
+            return PersistenceResult::Updated;
+        }
+        contents.push(t);
+        SearchPersistence::write(&contents);
+        return PersistenceResult::Created;
+    }
+
+    fn remove(kw: String) -> PersistenceResult {
+        let mut contents = SearchPersistence::load();
+        let original_size = contents.len();
+        contents.retain(|x| x.keyword != kw);
+        if original_size == contents.len() {
+            return PersistenceResult::Nothing;
+        }
+        SearchPersistence::write(&contents);
+        return PersistenceResult::Deleted;
     }
 }
