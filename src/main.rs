@@ -147,7 +147,7 @@ fn main() {
             }
         }
     } else {
-        println!("lol, what?");
+        println!("Invalid command.");
     }
 }
 
