@@ -23,7 +23,6 @@ pub enum PersistenceResult {
     Created,
     Updated,
     Deleted,
-    Loaded,
     Error,
     Nothing,
 }

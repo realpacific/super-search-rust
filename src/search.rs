@@ -47,6 +47,9 @@ impl Search {
         searches.push(Search::new("https://medium.com/search?q=", "Medium", "md"));
         searches.push(Search::new("https://stackoverflow.com/search?q=", "StackOverflow", "so"));
         searches.push(Search::new("https://github.com/search?q=", "GitHub", "gh"));
+        searches.push(Search::new( "https://www.google.com/search?q=", "Google", "go"));
+        searches.push(Search::new("https://www.duckduckgo.com/?q=", "Duck Duck Go", "dd"));
+        searches.push(Search::new( "https://www.bing.com/search?q=", "Bing", "bi"));
         searches
     }
 
