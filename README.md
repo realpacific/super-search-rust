@@ -1,14 +1,1 @@
-# Super Search 
-
-#### During development
-Run super search directly from terminal 
-```shell script
-cargo run -- <pass arguments here>
-```
-Examples:
-```shell script
-cargo run -- --help
-cargo run -- --yt How to rust
-cargo run -- --gt rust
-cargo run -- add -k rd -q https://www.reddit.com/r/rust/search/?q= -d Reddit Search
-```
+# Super Search Mouse-less-ishly search websites using CLI.Search Google using `ssearch --go How to rust`Search GitHub using `ssearch --gh rust`#### Adding and deleting your keywordsYou can also add your own keywords and the search query using `ssearch add -k <keyword> -q <query-url> -d <description>`. ``` ssearch add -k rd -q https://www.reddit.com/r/rust/search/?q= -d Reddit Search```Then to search, use `ssearch --<keyword> <your-query>`. Example:```shell scriptssearch --rd how to rust```And delete using `ssearch del -k <keyword>`.```shell scriptssearch del -k <keyword>```Use `ssearch help` for printing out help and `ssearch ls` to print the list of stored commands.#### During developmentRun super search directly from terminal ```shell scriptcargo run -- <pass arguments here>```Examples:```shell scriptcargo run -- --helpcargo run -- --yt How to rustcargo run -- --gh rustcargo run -- add -k rd -q https://www.reddit.com/r/rust/search/?q= -d Reddit Search```

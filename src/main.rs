@@ -34,21 +34,21 @@ fn main() {
                 .arg(
                     Arg::with_name("kw")
                         .short("k")
-                        .help("Keyword to be used when searching")
+                        .help("Keyword to be used when searching.")
                         .takes_value(true)
                         .max_values(1)
                         .required(true)
                 )
                 .arg(Arg::with_name("q")
                     .short("q")
-                    .help("Query to be used for building links")
+                    .help("Query to be used for building links.")
                     .takes_value(true)
                     .max_values(1)
                     .required(true)
                 )
                 .arg(Arg::with_name("d")
                     .short("d")
-                    .help("Describe what the query will do")
+                    .help("Describe what the query will do.")
                     .takes_value(true)
                     .max_values(100)
                     .required(true)
@@ -56,12 +56,12 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("del")
-                .about("Delete Keyword")
+                .about("Delete Keyword.")
                 .alias("del")
                 .arg(
                     Arg::with_name("kw")
                         .short("k")
-                        .help("Keyword to be deleted")
+                        .help("Keyword to be deleted.")
                         .takes_value(true)
                         .max_values(1)
                         .required(true)
@@ -147,7 +147,7 @@ fn main() {
             }
         }
     } else {
-        println!("lol, what?");
+        println!("Invalid command.");
     }
 }
 

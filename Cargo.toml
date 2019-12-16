@@ -1,8 +1,11 @@
 [package]
-name = "super-search-rust"
+name = "ssearch"
 version = "0.1.0"
 authors = ["Prashant <prashantbarahi@gmail.com>"]
 edition = "2018"
+description = "Super Search"
+repository = "https://github.com/realpacific/super-search-rust"
+keywords = ["search", "ssearch", "super-search"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
