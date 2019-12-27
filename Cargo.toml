@@ -1,11 +1,18 @@
 [package]
 name = "ssearch"
 version = "0.1.0"
-authors = ["Prashant <prashantbarahi@gmail.com>"]
+authors = ["Prashant Barahi <prashantbarahi@gmail.com>"]
 edition = "2018"
-description = "Super Search"
+description = "Super Search: Mouse-less-ishly search websites using CLI."
 repository = "https://github.com/realpacific/super-search-rust"
+homepage = "https://github.com/realpacific/super-search-rust"
+categories = ["command-line-utilities"]
 keywords = ["search", "ssearch", "super-search"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+exclude = ["data.json", "*.png"]
+
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
