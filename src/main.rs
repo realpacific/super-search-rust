@@ -6,12 +6,11 @@ extern crate prettytable;
 extern crate serde_json;
 
 use clap::{App as Clap, Arg, ArgMatches, ErrorKind, SubCommand};
+use opener;
 use prettytable::{Cell, Row, Table};
-use webbrowser;
-
 use url::{ParseError as UrlError, Url};
 
-use crate::persistence::{Persistence, SearchPersistence, PersistenceResult};
+use crate::persistence::{FileBasedSearchPersistence, Persistence, PersistenceResult};
 use crate::search::Search;
 
 mod search;
@@ -19,53 +18,47 @@ mod persistence;
 
 fn main() {
     let mut clap = Clap::new("Super Search")
-        .about("A CLI tool for searching on your favorites websites written in Rust.")
+        .about("Mouse-less-ishly search websites using CLI.")
         .version(crate_version!())
         .author(crate_authors!())
-        .subcommand(
-            SubCommand::with_name("list")
-                .about("List all stored keywords.")
-                .alias("ls"),
+        .subcommand(SubCommand::with_name("list")
+            .about("List all stored keywords.")
+            .alias("ls"))
+        .subcommand(SubCommand::with_name("add")
+            .about("Add new query")
+            .alias("a")
+            .arg(Arg::with_name("kw")
+                .short("k")
+                .help("Keyword to be used when searching.")
+                .takes_value(true)
+                .max_values(1)
+                .required(true)
+            )
+            .arg(Arg::with_name("q")
+                .short("q")
+                .help("Query to be used for building links.")
+                .takes_value(true)
+                .max_values(1)
+                .required(true)
+            )
+            .arg(Arg::with_name("d")
+                .short("d")
+                .help("Describe what the query will do.")
+                .takes_value(true)
+                .max_values(100)
+                .required(true)
+            )
         )
-        .subcommand(
-            SubCommand::with_name("add")
-                .about("Add new query")
-                .alias("a")
-                .arg(
-                    Arg::with_name("kw")
-                        .short("k")
-                        .help("Keyword to be used when searching.")
-                        .takes_value(true)
-                        .max_values(1)
-                        .required(true)
-                )
-                .arg(Arg::with_name("q")
-                    .short("q")
-                    .help("Query to be used for building links.")
-                    .takes_value(true)
-                    .max_values(1)
-                    .required(true)
-                )
-                .arg(Arg::with_name("d")
-                    .short("d")
-                    .help("Describe what the query will do.")
-                    .takes_value(true)
-                    .max_values(100)
-                    .required(true)
-                )
-        )
-        .subcommand(
-            SubCommand::with_name("del")
-                .about("Delete Keyword.")
-                .alias("del")
-                .arg(
-                    Arg::with_name("kw")
-                        .short("k")
-                        .help("Keyword to be deleted.")
-                        .takes_value(true)
-                        .max_values(1)
-                        .required(true)
-                )
+        .subcommand(SubCommand::with_name("del")
+            .about("Delete Keyword.")
+            .alias("del")
+            .arg(Arg::with_name("kw")
+                .short("k")
+                .help("Keyword to be deleted.")
+                .takes_value(true)
+                .max_values(1)
+                .required(true)
+            )
         );
 
     let searches = load_records_from_storage();
@@ -116,7 +109,7 @@ fn main() {
                 }
                 let description = sub.values_of("d").unwrap().collect::<Vec<_>>().join(" ");
                 let search = Search::new(url, description.as_str(), keyword);
-                let result = SearchPersistence::update(search);
+                let result = FileBasedSearchPersistence::update(search);
                 if result == PersistenceResult::Updated {
                     println!("Updated keyword {}.", keyword);
                 } else if result == PersistenceResult::Created {
@@ -126,7 +119,7 @@ fn main() {
             }
             ("del", Some(sub)) => {
                 let keyword = sub.value_of("kw").unwrap().trim().to_string();
-                let result = SearchPersistence::remove(keyword.clone());
+                let result = FileBasedSearchPersistence::remove(keyword.clone());
                 if result == PersistenceResult::Deleted {
                     println!("Deleted keyword {}.", keyword);
                 } else if result == PersistenceResult::Nothing {
@@ -141,8 +134,7 @@ fn main() {
                 let search_keyword = get_first_keyword(&matched_keyword);
                 let query_to_be_searched: Vec<&str> =
                     (&matched_keyword).values_of(&search_keyword).unwrap().collect();
-                let link =
-                    build_search_query_link(&search_keyword, &query_to_be_searched.join(" "), searches);
+                let link = build_search_query_link(&search_keyword, &query_to_be_searched.join(" "), searches);
                 launch_browser(&link);
             }
         }
@@ -157,10 +149,10 @@ fn get_first_keyword(matches: &ArgMatches) -> String {
 
 
 fn load_records_from_storage() -> Vec<Search> {
-    if !SearchPersistence::is_already_exits() {
-        SearchPersistence::write(&Search::initialize());
+    if !FileBasedSearchPersistence::is_already_exits() {
+        FileBasedSearchPersistence::write(&Search::initialize());
     }
-    return SearchPersistence::load();
+    return FileBasedSearchPersistence::load();
 }
 
 fn build_search_query_link(input: &String, query: &String, searches: Vec<Search>) -> String {
@@ -171,7 +163,7 @@ fn build_search_query_link(input: &String, query: &String, searches: Vec<Search>
 }
 
 fn display_table() {
-    let searches = SearchPersistence::load();
+    let searches = FileBasedSearchPersistence::load();
     let mut table = Table::new();
     table.add_row(row!["Keyword", "Description", "Url"]);
     searches.iter().for_each(|x| {
@@ -186,7 +178,5 @@ fn display_table() {
 
 
 fn launch_browser(link: &String) {
-    if !webbrowser::open(link.as_str()).is_ok() {
-        println!("Failed to open but here is the link tho... {}", &link);
-    }
+    opener::open(link.as_str());
 }
